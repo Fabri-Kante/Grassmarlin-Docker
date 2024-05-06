@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  grassmarlin:
+    container_name: grassmarlin
+    hostname: grassmarlin
+    build: .
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - $HOME/.Xauthority:/root/.Xauthority:ro  # Monta el archivo .Xauthority correctamente
+      - ./data:/root/data
+    environment:
+      - DISPLAY=${DISPLAY}  # Asegúrate de que DISPLAY esté configurado correctamente
+      - XAUTHORITY=/root/.Xauthority
+      - WIRESHARK_EXEC=/usr/bin/wireshark
+      - JAVA_TOOL_OPTIONS=-Dnio.mx=1024mb -Dnio.ms=512mb -Xms4096m -Xmx4096m  -XX:+UseG1GC -XX:+DisableExplicitGC -XX:NewSize=2048m -XX:MaxGCPauseMillis=2000 -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel
+    devices:
+      - "/dev/dri:/dev/dri"
+    network_mode: host
