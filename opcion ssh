@@ -17,3 +17,49 @@ services:
     devices:
       - "/dev/dri:/dev/dri"
     network_mode: host
+
+##############################################################################################################################################
+version: '3.8'
+
+services:
+  grassmarlin:
+    container_name: grassmarlin
+    hostname: grassmarlin
+    build: .
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - $HOME/.Xauthority:/root/.Xauthority:ro  # Monta el archivo .Xauthority correctamente
+      - ./data:/root/data
+    environment:
+      - DISPLAY=${DISPLAY}  # Asegúrate de que DISPLAY esté configurado correctamente
+      - XAUTHORITY=/root/.Xauthority
+      - WIRESHARK_EXEC=/usr/bin/wireshark
+      - JAVA_TOOL_OPTIONS=-Dnio.mx=1024mb -Dnio.ms=512mb -Xms4096m -Xmx4096m  -XX:+UseG1GC -XX:+DisableExplicitGC -XX:NewSize=2048m -XX:MaxGCPauseMillis=2000 -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel
+    devices:
+      - "/dev/dri:/dev/dri"
+    network_mode: host
+##############################################################################################################################################
+FROM openjdk:8u342-jdk-slim
+
+RUN apt-get update -y && \
+    apt-get install -y wget libpcap-dev openjfx xdg-utils procps \
+    libcanberra-gtk-module libcanberra-gtk3-module xauth \
+    libx11-dev libxtst6 libxrandr2 libxi6 libgl1-mesa-glx \
+    x11-apps  # Añade x11-apps aquí
+
+# Aquí continúa tu configuración previa para wireshark y GrassMarlin
+RUN echo "wireshark-common wireshark-common/install-setuid boolean true" | debconf-set-selections && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y wireshark
+
+WORKDIR /root
+
+RUN wget -P /app https://github.com/nsacyber/GRASSMARLIN/releases/download/v3.2.1/grassmarlin_3.2.1.ubuntu1604-1_amd64.deb
+RUN dpkg -i /app/grassmarlin_3.2.1.ubuntu1604-1_amd64.deb || apt-get install -f -y
+
+ENV CLASSPATH=/usr/share/openfx/lib:${CLASSPATH}
+
+# Configurar variables de entorno para X11
+ENV DISPLAY=:0.0
+ENV XAUTHORITY=/root/.Xauthority
+
+CMD tail -f /dev/null
